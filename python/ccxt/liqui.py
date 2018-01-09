@@ -256,7 +256,7 @@ class liqui (Exchange):
         return tickers[symbol]
 
     def parse_trade(self, trade, market=None):
-        timestamp = trade['timestamp'] * 1000
+        timestamp = int(trade['timestamp']) * 1000
         side = trade['type']
         if side == 'ask':
             side = 'sell'

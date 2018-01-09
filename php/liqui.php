@@ -266,7 +266,7 @@ class liqui extends Exchange {
     }
 
     public function parse_trade ($trade, $market = null) {
-        $timestamp = $trade['timestamp'] * 1000;
+        $timestamp = intval ($trade['timestamp']) * 1000;
         $side = $trade['type'];
         if ($side == 'ask')
             $side = 'sell';
