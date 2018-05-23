@@ -533,7 +533,13 @@ class hitbtc2 extends hitbtc {
             'options' => array (
                 'defaultTimeInForce' => 'FOK',
             ),
-            'exceptions' => array (),
+            'exceptions' => array (
+                '2010' => '\\ccxt\\InvalidOrder', // "Quantity not a valid number"
+                '2011' => '\\ccxt\\InvalidOrder', // "Quantity too low"
+                '2020' => '\\ccxt\\InvalidOrder', // "Price not a valid number"
+                '20002' => '\\ccxt\\OrderNotFound', // canceling non-existent order
+                '20001' => '\\ccxt\\InsufficientFunds',
+            ),
         ));
     }
 
@@ -1125,27 +1131,18 @@ class hitbtc2 extends hitbtc {
             // array ("$code":504,"$message":"Gateway Timeout","description":"")
             if (($code === 503) || ($code === 504))
                 throw new ExchangeNotAvailable ($feedback);
+            // array ("error":{"$code":20002,"$message":"Order not found","description":"")}
             if ($body[0] === '{') {
                 $response = json_decode ($body, $as_associative_array = true);
                 if (is_array ($response) && array_key_exists ('error', $response)) {
-                    if (is_array ($response['error']) && array_key_exists ('message', $response['error'])) {
-                        $message = $response['error']['message'];
-                        $code = $this->safe_string($response['error'], 'code');
-                        $exceptions = $this->exceptions;
-                        if (is_array ($exceptions) && array_key_exists ($code, $exceptions)) {
-                            throw new $exceptions[$code] ($feedback);
-                        }
-                        if ($message === 'Order not found') {
-                            throw new OrderNotFound ($this->id . ' order not found in active orders');
-                        } else if ($message === 'Quantity not a valid number') {
-                            throw new InvalidOrder ($feedback);
-                        } else if ($message === 'Quantity too low') {
-                            throw new InvalidOrder ($feedback);
-                        } else if ($message === 'Insufficient funds') {
-                            throw new InsufficientFunds ($feedback);
-                        } else if ($message === 'Duplicate clientOrderId') {
-                            throw new InvalidOrder ($feedback);
-                        }
+                    $code = $this->safe_string($response['error'], 'code');
+                    $exceptions = $this->exceptions;
+                    if (is_array ($exceptions) && array_key_exists ($code, $exceptions)) {
+                        throw new $exceptions[$code] ($feedback);
+                    }
+                    $message = $this->safe_string($response['error'], 'message');
+                    if ($message === 'Duplicate clientOrderId') {
+                        throw new InvalidOrder ($feedback);
                     }
                 }
             }
