@@ -39,6 +39,7 @@ class zb (Exchange):
                 'fetchOrder': True,
                 'fetchOrders': True,
                 'fetchOpenOrders': True,
+                'fetchOHLCV': True,
                 'withdraw': True,
             },
             'timeframes': {
@@ -325,7 +326,8 @@ class zb (Exchange):
         if since is not None:
             request['since'] = since
         response = self.publicGetKline(self.extend(request, params))
-        return self.parse_ohlcvs(response['data'], market, timeframe, since, limit)
+        data = self.safe_value(response, 'data', [])
+        return self.parse_ohlcvs(data, market, timeframe, since, limit)
 
     def parse_trade(self, trade, market=None):
         timestamp = trade['date'] * 1000
